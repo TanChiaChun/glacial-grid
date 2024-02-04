@@ -1,0 +1,3 @@
+-r ./git-hooks/requirements-dev.txt
+
+-r ./requirements.txt
