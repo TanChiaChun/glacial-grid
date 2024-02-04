@@ -1,0 +1,29 @@
+name: CI
+on: push
+jobs:
+  markdown:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v4
+        with:
+          submodules: 'true'
+      - name: Install markdownlint
+        run: |
+          npm install --global markdownlint-cli
+          markdownlint --version
+      - name: Install Bash (macOS)
+        if: ${{ matrix.os == 'macos-latest' }}
+        run: |
+          brew update
+          brew install bash
+      - name: Get Bash version
+        run: bash --version
+      - name: Run markdownlint
+        shell: bash
+        run: |
+          source ./git-hooks/src/ci.sh
+          run_ci_markdown
