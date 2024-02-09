@@ -1,0 +1,8 @@
+[tool.poetry]
+name = "glacial-grid"
+version = "0.1.0"
+description = ""
+authors = ["Tan Chia Chun <54241577+TanChiaChun@users.noreply.github.com>"]
+
+[tool.poetry.dependencies]
+python = "~3.10"
