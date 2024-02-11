@@ -38,7 +38,7 @@ jobs:
         run: |
           source ./git-hooks/src/py.sh
           activate_project_venv_bash
-          pip install --requirement ./requirements-dev.txt
+          pip install --requirement ./pip/requirements-dev.txt
           black --version
           pylint --version
           mypy --version
