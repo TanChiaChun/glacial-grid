@@ -22,16 +22,19 @@ jobs:
           pip install poetry
           poetry --version
       - name: Create venv
+        shell: bash
         run: |
           source ./git-hooks/src/py.sh
           create_project_venv
       - name: Poetry install packages
+        shell: bash
         run: |
           source ./git-hooks/src/py.sh
           activate_project_venv_bash
           poetry install --no-root
           python -m django --version
       - name: pip install packages
+        shell: bash
         run: |
           source ./git-hooks/src/py.sh
           activate_project_venv_bash
