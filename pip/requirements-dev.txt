@@ -1,2 +1,2 @@
--r ./git-hooks/requirements-dev.txt
+-r ../git-hooks/requirements-dev.txt
 django-stubs
