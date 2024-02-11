@@ -21,12 +21,20 @@ jobs:
         run: |
           pip install poetry
           poetry --version
+      - name: Create venv
+        run: |
+          source ./git-hooks/src/py.sh
+          create_project_venv
       - name: Poetry install packages
         run: |
+          source ./git-hooks/src/py.sh
+          activate_project_venv_bash
           poetry install --no-root
           python -m django --version
       - name: pip install packages
         run: |
+          source ./git-hooks/src/py.sh
+          activate_project_venv_bash
           pip install --requirement ./requirements-dev.txt
           black --version
           pylint --version
@@ -43,26 +51,31 @@ jobs:
         shell: bash
         run: |
           source ./git-hooks/src/ci.sh
+          activate_project_venv_bash
           run_ci_python_black
       - name: Run Pylint
         shell: bash
         run: |
           source ./git-hooks/src/ci.sh
+          activate_project_venv_bash
           run_ci_python_pylint
       - name: Run mypy
         shell: bash
         run: |
           source ./git-hooks/src/ci.sh
+          activate_project_venv_bash
           run_ci_python_mypy
       - name: Run isort
         shell: bash
         run: |
           source ./git-hooks/src/ci.sh
+          activate_project_venv_bash
           run_ci_python_isort
       - name: Run unittest
         shell: bash
         run: |
           source ./git-hooks/src/ci.sh
+          activate_project_venv_bash
           run_ci_python_unittest
   markdown:
     strategy:
