@@ -1,0 +1,2 @@
+-r ./git-hooks/requirements-dev.txt
+django-stubs
