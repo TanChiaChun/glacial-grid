@@ -14,7 +14,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version-file: 'pyproject.toml'
+          python-version-file: './poetry/pyproject.toml'
       - name: Get Python version
         run: python --version
       - name: Install Poetry
@@ -31,14 +31,14 @@ jobs:
         run: |
           source ./git-hooks/src/py.sh
           activate_project_venv_bash
-          poetry install --no-root
+          poetry install --no-root --directory='./poetry/pyproject.toml'
           python -m django --version
       - name: pip install packages
         shell: bash
         run: |
           source ./git-hooks/src/py.sh
           activate_project_venv_bash
-          pip install --requirement ./pip/requirements-dev.txt
+          pip install --requirement ./requirements-dev.txt
           black --version
           pylint --version
           mypy --version
