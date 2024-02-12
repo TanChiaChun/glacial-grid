@@ -24,21 +24,21 @@ jobs:
       - name: Create venv
         shell: bash
         run: |
-          source ./git-hooks/src/py.sh
+          source './git-hooks/src/py.sh'
           create_project_venv
       - name: Poetry install packages
         shell: bash
         run: |
-          source ./git-hooks/src/py.sh
+          source './git-hooks/src/py.sh'
           activate_project_venv_bash
           poetry install --no-root --directory='./poetry/pyproject.toml'
           python -m django --version
       - name: pip install packages
         shell: bash
         run: |
-          source ./git-hooks/src/py.sh
+          source './git-hooks/src/py.sh'
           activate_project_venv_bash
-          pip install --requirement ./requirements-dev.txt
+          pip install --requirement './requirements-dev.txt'
           black --version
           pylint --version
           mypy --version
@@ -53,31 +53,31 @@ jobs:
       - name: Run Black
         shell: bash
         run: |
-          source ./git-hooks/src/ci.sh
+          source './git-hooks/src/ci.sh'
           activate_project_venv_bash
           run_ci_python_black
       - name: Run Pylint
         shell: bash
         run: |
-          source ./git-hooks/src/ci.sh
+          source './git-hooks/src/ci.sh'
           activate_project_venv_bash
           run_ci_python_pylint
       - name: Run mypy
         shell: bash
         run: |
-          source ./git-hooks/src/ci.sh
+          source './git-hooks/src/ci.sh'
           activate_project_venv_bash
           run_ci_python_mypy
       - name: Run isort
         shell: bash
         run: |
-          source ./git-hooks/src/ci.sh
+          source './git-hooks/src/ci.sh'
           activate_project_venv_bash
           run_ci_python_isort
       - name: Run unittest
         shell: bash
         run: |
-          source ./git-hooks/src/ci.sh
+          source './git-hooks/src/ci.sh'
           activate_project_venv_bash
           run_ci_python_unittest
   markdown:
@@ -104,5 +104,5 @@ jobs:
       - name: Run markdownlint
         shell: bash
         run: |
-          source ./git-hooks/src/ci.sh
+          source './git-hooks/src/ci.sh'
           run_ci_markdown
