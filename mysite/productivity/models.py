@@ -1,5 +1,7 @@
 """Models for productivity app."""
 
+from datetime import datetime
+
 from django.db import models
 
 
@@ -19,4 +21,4 @@ class Productivity(models.Model):
     frequency = models.IntegerField(choices=Frequency.choices)
     group = models.CharField(max_length=200)
     last_check = models.DateTimeField(auto_now=True)
-    last_check_undo = models.DateTimeField()
+    last_check_undo = models.DateTimeField(default=datetime.min)
