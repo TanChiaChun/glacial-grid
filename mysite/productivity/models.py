@@ -22,3 +22,14 @@ class Productivity(models.Model):
     group = models.CharField(max_length=200)
     last_check = models.DateTimeField(auto_now=True)
     last_check_undo = models.DateTimeField(default=datetime.min)
+
+    def get_frequency(self) -> str:
+        """Return name of Frequency enum in title case."""
+        frequency_name = ""
+
+        try:
+            frequency_name = self.Frequency(self.frequency).name.title()
+        except ValueError:
+            print("Invalid enum value for Frequency")
+
+        return frequency_name
