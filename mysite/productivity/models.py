@@ -1,8 +1,11 @@
 """Models for productivity app."""
 
+import logging
 from datetime import datetime
 
 from django.db import models
+
+logger = logging.getLogger(__name__)
 
 
 class Productivity(models.Model):
@@ -30,6 +33,6 @@ class Productivity(models.Model):
         try:
             frequency_name = self.Frequency(self.frequency).name.title()
         except ValueError:
-            print("Invalid enum value for Frequency")
+            logger.error("Invalid enum value for Frequency")
 
         return frequency_name

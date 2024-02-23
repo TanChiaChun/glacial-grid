@@ -133,3 +133,4 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 LOGGING = deepcopy(DEFAULT_LOGGING)
 del LOGGING["handlers"]["mail_admins"]
 LOGGING["loggers"]["django"]["handlers"].pop()
+LOGGING["loggers"]["productivity"] = deepcopy(LOGGING["loggers"]["django"])
