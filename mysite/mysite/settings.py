@@ -133,4 +133,18 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 LOGGING = deepcopy(DEFAULT_LOGGING)
 del LOGGING["handlers"]["mail_admins"]
 LOGGING["loggers"]["django"]["handlers"].pop()
+
+LOGGING["formatters"]["file"] = {
+    "format": "{levelname} {asctime} {message}",
+    "style": "{",
+}
+
+LOGGING["handlers"]["file"] = {
+    "level": "INFO",
+    "class": "logging.FileHandler",
+    "filename": "mysite/mysite.log",
+    "formatter": "file",
+}
+
 LOGGING["loggers"]["productivity"] = deepcopy(LOGGING["loggers"]["django"])
+LOGGING["loggers"]["productivity"]["handlers"].append("file")

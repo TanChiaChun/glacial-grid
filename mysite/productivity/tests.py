@@ -1,8 +1,13 @@
 import logging
+from pathlib import Path
 
 from django.test import SimpleTestCase
 
+# pylint: disable=wrong-import-order
+from mysite.settings import LOGGING
 from productivity.models import Productivity, logger
+
+# pylint: enable=wrong-import-order
 
 
 class ProductivityModelTests(SimpleTestCase):
@@ -18,3 +23,10 @@ class ProductivityModelTests(SimpleTestCase):
                 logger_obj.records[0].getMessage(),
                 "Invalid enum value for Frequency",
             )
+
+
+# pylint: disable-next=invalid-name
+def tearDownModule() -> None:
+    log_filename = LOGGING["handlers"]["file"]["filename"]
+    Path(log_filename).unlink()
+    print(f"Removed {log_filename}")
