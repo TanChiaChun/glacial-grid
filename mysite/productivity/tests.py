@@ -1,4 +1,5 @@
 import logging
+from datetime import datetime
 from pathlib import Path
 
 from django.test import SimpleTestCase
@@ -23,6 +24,15 @@ class ProductivityModelTests(SimpleTestCase):
                 logger_obj.records[0].getMessage(),
                 "Invalid enum value for Frequency",
             )
+
+    def test_get_last_check(self) -> None:
+        productivity = Productivity(
+            item="Calendar",
+            frequency=0,
+            group="Next",
+            last_check=datetime(2024, 1, 1),
+        )
+        self.assertEqual(productivity.get_last_check(), "01 Jan 12:00 AM")
 
 
 # pylint: disable-next=invalid-name

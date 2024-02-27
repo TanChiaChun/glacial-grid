@@ -36,3 +36,7 @@ class Productivity(models.Model):
             logger.error("Invalid enum value for Frequency")
 
         return frequency_name
+
+    def get_last_check(self) -> str:
+        """Return last_check in specified string format."""
+        return self.last_check.strftime("%d %b %I:%M %p")
