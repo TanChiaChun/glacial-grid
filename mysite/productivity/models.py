@@ -26,6 +26,15 @@ class Productivity(models.Model):
     last_check = models.DateTimeField(auto_now=True)
     last_check_undo = models.DateTimeField(default=datetime.min)
 
+    def __str__(self) -> str:
+        return (
+            f"[{self.get_frequency()}-{self.group}]"
+            + " "
+            + self.item
+            + " "
+            + f"({self.get_last_check()})"
+        )
+
     def get_frequency(self) -> str:
         """Return name of Frequency enum in title case."""
         frequency_name = ""
