@@ -1,8 +1,8 @@
 import logging
-from datetime import datetime
+from datetime import date, datetime
 from pathlib import Path
 
-from django.test import SimpleTestCase
+from django.test import TestCase
 
 # pylint: disable=wrong-import-order
 from mysite.settings import LOGGING
@@ -11,7 +11,7 @@ from productivity.models import Productivity, logger
 # pylint: enable=wrong-import-order
 
 
-class ProductivityModelTests(SimpleTestCase):
+class ProductivityModelTests(TestCase):
     def setUp(self) -> None:
         self.productivity = Productivity(
             item="Calendar",
@@ -39,6 +39,29 @@ class ProductivityModelTests(SimpleTestCase):
 
     def test_get_last_check(self) -> None:
         self.assertEqual(self.productivity.get_last_check(), "01 Jan 12:00 AM")
+
+    def test_crud(self) -> None:
+        self.productivity.save()
+
+        productivities = Productivity.objects.all()
+        self.assertEqual(len(productivities), 1)
+        self.assertEqual(productivities[0].item, "Calendar")
+        self.assertEqual(productivities[0].frequency, 0)
+        self.assertEqual(productivities[0].group, "Next")
+        self.assertEqual(productivities[0].last_check.date(), date.today())
+        self.assertEqual(productivities[0].last_check_undo, datetime.min)
+
+        self.productivity.item = "To-Do"
+        self.productivity.save()
+        productivities = Productivity.objects.all()
+        self.assertEqual(len(productivities), 1)
+        self.assertEqual(productivities[0].item, "To-Do")
+        self.assertEqual(productivities[0].frequency, 0)
+
+        self.assertEqual(
+            self.productivity.delete(), (1, {"productivity.Productivity": 1})
+        )
+        self.assertEqual(len(Productivity.objects.all()), 0)
 
 
 # pylint: disable-next=invalid-name
