@@ -78,13 +78,13 @@ jobs:
           activate_project_venv_bash
           set_django_env_var
           run_ci_python_isort
-      - name: Run unittest
+      - name: Run Django test
         shell: bash
         run: |
           source './git-hooks/src/ci.sh'
           activate_project_venv_bash
           set_django_env_var
-          run_ci_python_unittest
+          run_ci_python_django_test
   markdown:
     strategy:
       matrix:
