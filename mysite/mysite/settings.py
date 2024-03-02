@@ -10,7 +10,10 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.2/ref/settings/
 """
 
+from copy import deepcopy
 from pathlib import Path
+
+from django.utils.log import DEFAULT_LOGGING
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -33,6 +36,7 @@ ALLOWED_HOSTS: list[str] = []
 # Application definition
 
 INSTALLED_APPS = [
+    "productivity.apps.ProductivityConfig",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -122,3 +126,25 @@ TIME_ZONE = "UTC"
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+
+# Logging
+
+LOGGING = deepcopy(DEFAULT_LOGGING)
+del LOGGING["handlers"]["mail_admins"]
+LOGGING["loggers"]["django"]["handlers"].pop()
+
+LOGGING["formatters"]["file"] = {
+    "format": "{levelname} {asctime} {message}",
+    "style": "{",
+}
+
+LOGGING["handlers"]["file"] = {
+    "level": "INFO",
+    "class": "logging.FileHandler",
+    "filename": "mysite/mysite.log",
+    "formatter": "file",
+}
+
+LOGGING["loggers"]["productivity"] = deepcopy(LOGGING["loggers"]["django"])
+LOGGING["loggers"]["productivity"]["handlers"].append("file")

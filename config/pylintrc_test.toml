@@ -1,0 +1,12 @@
+[tool.pylint.format]
+max-line-length = 80
+
+[tool.pylint."messages control"]
+disable = [
+    "missing-module-docstring",
+    "missing-class-docstring",
+    "missing-function-docstring",
+]
+
+[tool.pylint.main]
+load-plugins = ["pylint_django"]

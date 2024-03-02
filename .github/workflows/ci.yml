@@ -55,31 +55,36 @@ jobs:
         run: |
           source './git-hooks/src/ci.sh'
           activate_project_venv_bash
+          set_django_env_var
           run_ci_python_black
       - name: Run Pylint
         shell: bash
         run: |
           source './git-hooks/src/ci.sh'
           activate_project_venv_bash
+          set_django_env_var
           run_ci_python_pylint
       - name: Run mypy
         shell: bash
         run: |
           source './git-hooks/src/ci.sh'
           activate_project_venv_bash
+          set_django_env_var
           run_ci_python_mypy
       - name: Run isort
         shell: bash
         run: |
           source './git-hooks/src/ci.sh'
           activate_project_venv_bash
+          set_django_env_var
           run_ci_python_isort
-      - name: Run unittest
+      - name: Run Django test
         shell: bash
         run: |
           source './git-hooks/src/ci.sh'
           activate_project_venv_bash
-          run_ci_python_unittest
+          set_django_env_var
+          run_ci_python_django_test
   markdown:
     strategy:
       matrix:
