@@ -67,5 +67,8 @@ class ProductivityModelTests(TestCase):
 # pylint: disable-next=invalid-name
 def tearDownModule() -> None:
     log_filename = LOGGING["handlers"]["file"]["filename"]
-    Path(log_filename).unlink()
-    print(f"Removed {log_filename}")
+    try:
+        Path(log_filename).unlink()
+        print(f"Removed {log_filename}")
+    except PermissionError:
+        print(f"{log_filename} not removed")
