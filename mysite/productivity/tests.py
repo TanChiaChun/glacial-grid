@@ -37,9 +37,6 @@ class ProductivityModelTests(TestCase):
                 "Invalid enum value for Frequency",
             )
 
-    def test_get_last_check(self) -> None:
-        self.assertEqual(self.productivity.get_last_check(), "01 Jan 12:00 AM")
-
     def test_crud(self) -> None:
         self.productivity.save()
 

@@ -32,7 +32,7 @@ class Productivity(models.Model):
             + " "
             + self.item
             + " "
-            + f"({self.get_last_check()})"
+            + f"({self.last_check.strftime('%d %b %I:%M %p')})"
         )
 
     def get_frequency(self) -> str:
@@ -45,7 +45,3 @@ class Productivity(models.Model):
             logger.error("Invalid enum value for Frequency")
 
         return frequency_name
-
-    def get_last_check(self) -> str:
-        """Return last_check in specified string format."""
-        return self.last_check.strftime("%d %b %I:%M %p")
