@@ -27,12 +27,18 @@ class Productivity(models.Model):
     last_check_undo = models.DateTimeField(default=datetime.min)
 
     def __str__(self) -> str:
+        last_check = (
+            self.last_check.strftime("%d %b %I:%M %p")
+            if self.last_check
+            else ""
+        )
+
         return (
             f"[{self.get_frequency()}-{self.group}]"
             + " "
             + self.item
             + " "
-            + f"({self.last_check.strftime('%d %b %I:%M %p')})"
+            + f"({last_check})"
         )
 
     def get_frequency(self) -> str:

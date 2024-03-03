@@ -25,6 +25,9 @@ class ProductivityModelTests(TestCase):
             str(self.productivity), "[Key-Next] Calendar (01 Jan 12:00 AM)"
         )
 
+    def test_str_empty_instance(self) -> None:
+        self.assertEqual(str(Productivity()), "[-]  ()")
+
     def test_get_frequency(self) -> None:
         self.assertEqual(self.productivity.get_frequency(), "Key")
 
