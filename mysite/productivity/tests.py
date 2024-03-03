@@ -40,6 +40,29 @@ class ProductivityModelTests(TestCase):
                 "Invalid enum value for Frequency",
             )
 
+    def test_serialize_json(self) -> None:
+        self.productivity.id = 1
+        expected = {
+            "id": "1",
+            "item": "Calendar",
+            "frequency": "Key",
+            "group": "Next",
+            "last_check": "2024-01-01T00:00:00",
+            "last_check_undo": "0001-01-01T00:00:00",
+        }
+        self.assertDictEqual(self.productivity.serialize_json(), expected)
+
+    def test_serialize_json_empty_instance(self) -> None:
+        expected = {
+            "id": "None",
+            "item": "",
+            "frequency": "",
+            "group": "",
+            "last_check": "",
+            "last_check_undo": "0001-01-01T00:00:00",
+        }
+        self.assertDictEqual(Productivity().serialize_json(), expected)
+
     def test_crud(self) -> None:
         self.productivity.save()
 

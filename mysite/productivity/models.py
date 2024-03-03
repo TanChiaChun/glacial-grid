@@ -51,3 +51,20 @@ class Productivity(models.Model):
             logger.error("Invalid enum value for Frequency")
 
         return frequency_name
+
+    def serialize_json(self) -> dict[str, str]:
+        """Serialize model to JSON.
+
+        Returns:
+            Dictionary mapping of serialized model in JSON.
+        """
+        return {
+            "id": str(self.id),
+            "item": self.item,
+            "frequency": self.get_frequency(),
+            "group": self.group,
+            "last_check": (
+                self.last_check.isoformat() if self.last_check else ""
+            ),
+            "last_check_undo": self.last_check_undo.isoformat(),
+        }
