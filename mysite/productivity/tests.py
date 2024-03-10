@@ -1,12 +1,14 @@
+import json
 import logging
 from datetime import date, datetime
 from pathlib import Path
 
-from django.test import TestCase
+from django.test import RequestFactory, TestCase
 
 # pylint: disable=wrong-import-order
 from mysite.settings import LOGGING
 from productivity.models import Productivity, logger
+from productivity.views import create
 
 # pylint: enable=wrong-import-order
 
@@ -85,6 +87,81 @@ class ProductivityModelTests(TestCase):
             self.productivity.delete(), (1, {"productivity.Productivity": 1})
         )
         self.assertEqual(len(Productivity.objects.all()), 0)
+
+
+class ViewsTest(TestCase):
+    def test_create_success(self) -> None:
+        db_count_before = Productivity.objects.count()
+
+        request = RequestFactory().post(
+            "productivity/create/",
+            data={"item": "Calendar", "frequency": "0", "group": "Next"},
+        )
+        response = create(request)
+
+        j = json.loads(response.content)
+        self.assertEqual(len(j), 6)
+        self.assertIn("id", j)
+        self.assertEqual(j["item"], "Calendar")
+        self.assertEqual(j["frequency"], "Key")
+        self.assertEqual(j["group"], "Next")
+        self.assertIs(
+            j["last_check"].startswith(date.today().isoformat()), True
+        )
+        self.assertEqual(j["last_check_undo"], "0001-01-01T00:00:00")
+
+        self.assertEqual(Productivity.objects.count(), db_count_before + 1)
+
+    def test_create_fail_get(self) -> None:
+        request = RequestFactory().get("productivity/create/")
+        response = create(request)
+
+        self.assertEqual(response.status_code, 405)
+
+    def test_create_fail_missing_data(self) -> None:
+        request = RequestFactory().post("productivity/create/")
+        response = create(request)
+
+        self.assertEqual(response.status_code, 400)
+        self.assertDictEqual(
+            json.loads(response.content), {"detail": "Missing data"}
+        )
+
+    def test_create_fail_invalid_data_item(self) -> None:
+        request = RequestFactory().post(
+            "productivity/create/",
+            data={"item": "Calendar" * 26, "frequency": "0", "group": "Next"},
+        )
+        response = create(request)
+
+        self.assertEqual(response.status_code, 400)
+        self.assertDictEqual(
+            json.loads(response.content), {"detail": "Data validation error"}
+        )
+
+    def test_create_fail_invalid_data_frequency(self) -> None:
+        request = RequestFactory().post(
+            "productivity/create/",
+            data={"item": "Calendar", "frequency": "10", "group": "Next"},
+        )
+        response = create(request)
+
+        self.assertEqual(response.status_code, 400)
+        self.assertDictEqual(
+            json.loads(response.content), {"detail": "Data validation error"}
+        )
+
+    def test_create_fail_invalid_data_group(self) -> None:
+        request = RequestFactory().post(
+            "productivity/create/",
+            data={"item": "Calendar", "frequency": "0", "group": "Next" * 51},
+        )
+        response = create(request)
+
+        self.assertEqual(response.status_code, 400)
+        self.assertDictEqual(
+            json.loads(response.content), {"detail": "Data validation error"}
+        )
 
 
 # pylint: disable-next=invalid-name

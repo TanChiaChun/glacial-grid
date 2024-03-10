@@ -18,5 +18,6 @@ Including another URLconf
 from django.urls import include, path
 
 urlpatterns = [
+    path("productivity/", include("productivity.urls")),
     path("authentication/", include("authentication.urls")),
 ]
