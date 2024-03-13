@@ -8,7 +8,7 @@ from django.test import RequestFactory, TestCase
 # pylint: disable=wrong-import-order
 from mysite.settings import LOGGING
 from productivity.models import Productivity, logger
-from productivity.views import index
+from productivity.views import create_productivity, index
 
 # pylint: enable=wrong-import-order
 
@@ -90,14 +90,14 @@ class ProductivityModelTests(TestCase):
 
 
 class ViewsTest(TestCase):
-    def test_create_success(self) -> None:
+    def test_create_productivity_success(self) -> None:
         db_count_before = Productivity.objects.count()
 
         request = RequestFactory().post(
             "productivity/",
             data={"item": "Calendar", "frequency": "0", "group": "Next"},
         )
-        response = index(request)
+        response = create_productivity(request)
 
         self.assertEqual(response.status_code, 201)
 
@@ -114,7 +114,58 @@ class ViewsTest(TestCase):
 
         self.assertEqual(Productivity.objects.count(), db_count_before + 1)
 
-    def test_create_fail_get(self) -> None:
+    def test_create_productivity_fail_get(self) -> None:
+        request = RequestFactory().get("productivity/")
+        response = create_productivity(request)
+
+        self.assertEqual(response.status_code, 405)
+
+    def test_create_productivity_fail_missing_data(self) -> None:
+        request = RequestFactory().post("productivity/")
+        response = create_productivity(request)
+
+        self.assertEqual(response.status_code, 400)
+        self.assertDictEqual(
+            json.loads(response.content), {"error": "Missing data"}
+        )
+
+    def test_create_productivity_fail_invalid_data_item(self) -> None:
+        request = RequestFactory().post(
+            "productivity/",
+            data={"item": "Calendar" * 26, "frequency": "0", "group": "Next"},
+        )
+        response = create_productivity(request)
+
+        self.assertEqual(response.status_code, 400)
+        self.assertDictEqual(
+            json.loads(response.content), {"error": "Data validation error"}
+        )
+
+    def test_create_productivity_fail_invalid_data_frequency(self) -> None:
+        request = RequestFactory().post(
+            "productivity/",
+            data={"item": "Calendar", "frequency": "10", "group": "Next"},
+        )
+        response = create_productivity(request)
+
+        self.assertEqual(response.status_code, 400)
+        self.assertDictEqual(
+            json.loads(response.content), {"error": "Data validation error"}
+        )
+
+    def test_create_productivity_fail_invalid_data_group(self) -> None:
+        request = RequestFactory().post(
+            "productivity/",
+            data={"item": "Calendar", "frequency": "0", "group": "Next" * 51},
+        )
+        response = create_productivity(request)
+
+        self.assertEqual(response.status_code, 400)
+        self.assertDictEqual(
+            json.loads(response.content), {"error": "Data validation error"}
+        )
+
+    def test_index_fail_get(self) -> None:
         request = RequestFactory().get("productivity/")
         response = index(request)
 
@@ -122,51 +173,6 @@ class ViewsTest(TestCase):
         self.assertDictEqual(
             json.loads(response.content),
             {"error": "Request method not allowed"},
-        )
-
-    def test_create_fail_missing_data(self) -> None:
-        request = RequestFactory().post("productivity/")
-        response = index(request)
-
-        self.assertEqual(response.status_code, 400)
-        self.assertDictEqual(
-            json.loads(response.content), {"error": "Missing data"}
-        )
-
-    def test_create_fail_invalid_data_item(self) -> None:
-        request = RequestFactory().post(
-            "productivity/",
-            data={"item": "Calendar" * 26, "frequency": "0", "group": "Next"},
-        )
-        response = index(request)
-
-        self.assertEqual(response.status_code, 400)
-        self.assertDictEqual(
-            json.loads(response.content), {"error": "Data validation error"}
-        )
-
-    def test_create_fail_invalid_data_frequency(self) -> None:
-        request = RequestFactory().post(
-            "productivity/",
-            data={"item": "Calendar", "frequency": "10", "group": "Next"},
-        )
-        response = index(request)
-
-        self.assertEqual(response.status_code, 400)
-        self.assertDictEqual(
-            json.loads(response.content), {"error": "Data validation error"}
-        )
-
-    def test_create_fail_invalid_data_group(self) -> None:
-        request = RequestFactory().post(
-            "productivity/",
-            data={"item": "Calendar", "frequency": "0", "group": "Next" * 51},
-        )
-        response = index(request)
-
-        self.assertEqual(response.status_code, 400)
-        self.assertDictEqual(
-            json.loads(response.content), {"error": "Data validation error"}
         )
 
 
