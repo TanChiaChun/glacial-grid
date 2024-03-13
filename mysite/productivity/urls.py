@@ -4,4 +4,4 @@ from django.urls import path
 
 from productivity import views
 
-urlpatterns = [path("create/", views.create)]
+urlpatterns = [path("", views.index)]

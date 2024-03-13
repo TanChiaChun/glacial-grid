@@ -2,39 +2,41 @@
 
 from django.core.exceptions import ValidationError
 from django.http import HttpRequest, JsonResponse
-from django.views.decorators.http import require_POST
 
 from productivity.models import Productivity
 
 
-@require_POST
-def create(request: HttpRequest) -> JsonResponse:
-    """Create & save Productivity object into database.
+def index(request: HttpRequest) -> JsonResponse:
+    """Create Productivity object if POST.
 
     Args:
         request:
-            HttpRequest object, with below data in body.
-                - item
-                - frequency
-                - group
+            HttpRequest object.
+                - If POST, below data required in body.
+                    - item
+                    - frequency
+                    - group
 
     Returns:
-        JSON Response of created Productivity object.
+        JSON Response of Productivity object or error message.
     """
-    try:
-        p = Productivity(
-            item=request.POST["item"],
-            frequency=int(request.POST["frequency"]),
-            group=request.POST["group"],
-        )
-    except KeyError:
-        return JsonResponse({"detail": "Missing data"}, status=400)
+    if request.method == "POST":
+        try:
+            p = Productivity(
+                item=request.POST["item"],
+                frequency=int(request.POST["frequency"]),
+                group=request.POST["group"],
+            )
+        except KeyError:
+            return JsonResponse({"error": "Missing data"}, status=400)
 
-    try:
-        p.clean_fields()
-    except ValidationError:
-        return JsonResponse({"detail": "Data validation error"}, status=400)
+        try:
+            p.clean_fields()
+        except ValidationError:
+            return JsonResponse({"error": "Data validation error"}, status=400)
 
-    p.save()
+        p.save()
 
-    return JsonResponse(p.serialize_json())
+        return JsonResponse(p.serialize_json(), status=201)
+
+    return JsonResponse({"error": "Request method not allowed"}, status=405)
