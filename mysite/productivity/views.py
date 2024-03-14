@@ -55,6 +55,10 @@ def index(request: HttpRequest) -> JsonResponse:
         JSON Response of Productivity object or error message.
     """
     if request.method == "POST":
-        return create_productivity(request)
+        json_response = create_productivity(request)
+    else:
+        json_response = JsonResponse(
+            {"error": "Request method not allowed"}, status=405
+        )
 
-    return JsonResponse({"error": "Request method not allowed"}, status=405)
+    return json_response
