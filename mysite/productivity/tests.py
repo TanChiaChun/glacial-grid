@@ -91,7 +91,7 @@ class ProductivityModelTests(TestCase):
 
 class ViewsTest(TestCase):
     def test_create_productivity_success(self) -> None:
-        db_count_before = Productivity.objects.count()
+        self.assertEqual(Productivity.objects.count(), 0)
 
         request = RequestFactory().post(
             "productivity/",
@@ -112,7 +112,13 @@ class ViewsTest(TestCase):
         )
         self.assertEqual(j["last_check_undo"], "0001-01-01T00:00:00")
 
-        self.assertEqual(Productivity.objects.count(), db_count_before + 1)
+        self.assertEqual(Productivity.objects.count(), 1)
+
+        self.assertEqual(
+            Productivity.objects.all().delete(),
+            (1, {"productivity.Productivity": 1}),
+        )
+        self.assertEqual(Productivity.objects.count(), 0)
 
     def test_create_productivity_fail_get(self) -> None:
         request = RequestFactory().get("productivity/")
