@@ -86,7 +86,7 @@ class ProductivityModelTests(TestCase):
         self.assertEqual(
             self.productivity.delete(), (1, {"productivity.Productivity": 1})
         )
-        self.assertEqual(len(Productivity.objects.all()), 0)
+        self.assertEqual(Productivity.objects.count(), 0)
 
 
 class ViewsTest(TestCase):
