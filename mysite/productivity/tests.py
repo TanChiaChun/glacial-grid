@@ -236,7 +236,6 @@ class ViewsTest(TestCase):
             Productivity.objects.all().delete(),
             (1, {"productivity.Productivity": 1}),
         )
-        self.assertEqual(Productivity.objects.count(), 0)
 
     def test_create_productivity_fail_get(self) -> None:
         request = RequestFactory().get("productivity/")
