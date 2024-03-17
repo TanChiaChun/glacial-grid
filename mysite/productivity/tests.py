@@ -9,7 +9,7 @@ from django.test import RequestFactory, TestCase
 # pylint: disable=wrong-import-order
 from mysite.settings import LOGGING
 from productivity.models import Productivity, logger
-from productivity.views import create_productivity, index
+from productivity.views import create_productivity, get_productivities, index
 
 # pylint: enable=wrong-import-order
 
@@ -37,6 +37,21 @@ def is_productivity_almost_equal(
         and (first.last_check.date() == second.last_check.date())
         and (first.last_check_undo.date() == second.last_check_undo.date())
     )
+
+
+def reset_last_check_time(json_objs: list[dict[str, str]]) -> None:
+    """Reset time of each `last_check`'s value.
+
+    Args:
+        json_objs:
+            List of serialized Productivity models.
+
+    Raises:
+        KeyError:
+            `last_check` key not found.
+    """
+    for j in json_objs:
+        j["last_check"] = j["last_check"][0:11] + "00:00:00"
 
 
 class ProductivityModelTests(TestCase):
@@ -203,6 +218,15 @@ class ProductivityModelTests(TestCase):
 
 
 class ViewsTest(TestCase):
+    def setUp(self) -> None:
+        self.dt_today = datetime.combine(date.today(), time())
+        self.productivity = Productivity(
+            item="Calendar",
+            frequency=0,
+            group="Next",
+            last_check=self.dt_today,
+        )
+
     def test_create_productivity(self) -> None:
         self.assertEqual(Productivity.objects.count(), 0)
 
@@ -217,15 +241,9 @@ class ViewsTest(TestCase):
         j = json.loads(response.content)
         self.assertEqual(len(j), 6)
         self.assertIn("id", j)
-        expected = Productivity(
-            item="Calendar",
-            frequency=0,
-            group="Next",
-            last_check=datetime.combine(date.today(), time()),
-        )
         self.assertIs(
             is_productivity_almost_equal(
-                Productivity.deserialize_json(j), expected
+                Productivity.deserialize_json(j), self.productivity
             ),
             True,
         )
@@ -288,8 +306,85 @@ class ViewsTest(TestCase):
             json.loads(response.content), {"error": "Data validation error"}
         )
 
-    def test_index_fail_get(self) -> None:
+    def test_get_productivities_zero_object(self) -> None:
+        self.assertEqual(Productivity.objects.count(), 0)
+
         request = RequestFactory().get("productivity/")
+        response = get_productivities(request)
+
+        self.assertListEqual(json.loads(response.content), [])
+
+    def test_get_productivities_one_object(self) -> None:
+        self.assertEqual(Productivity.objects.count(), 0)
+
+        self.productivity.save()
+
+        request = RequestFactory().get("productivity/")
+        response = get_productivities(request)
+
+        expected = [
+            {
+                "id": "1",
+                "item": "Calendar",
+                "frequency": "Key",
+                "group": "Next",
+                "last_check": self.dt_today.isoformat(),
+                "last_check_undo": "0001-01-01T00:00:00",
+            }
+        ]
+        productivities = json.loads(response.content)
+        reset_last_check_time(productivities)
+        self.assertListEqual(productivities, expected)
+
+        self.assertEqual(
+            Productivity.objects.all().delete(),
+            (1, {"productivity.Productivity": 1}),
+        )
+
+    def test_get_productivities_two_objects(self) -> None:
+        self.assertEqual(Productivity.objects.count(), 0)
+
+        self.productivity.save()
+        Productivity(item="To-Do", frequency=0, group="Next").save()
+
+        request = RequestFactory().get("productivity/")
+        response = get_productivities(request)
+
+        expected = [
+            {
+                "id": "1",
+                "item": "Calendar",
+                "frequency": "Key",
+                "group": "Next",
+                "last_check": self.dt_today.isoformat(),
+                "last_check_undo": "0001-01-01T00:00:00",
+            },
+            {
+                "id": "2",
+                "item": "To-Do",
+                "frequency": "Key",
+                "group": "Next",
+                "last_check": self.dt_today.isoformat(),
+                "last_check_undo": "0001-01-01T00:00:00",
+            },
+        ]
+        productivities = json.loads(response.content)
+        reset_last_check_time(productivities)
+        self.assertListEqual(productivities, expected)
+
+        self.assertEqual(
+            Productivity.objects.all().delete(),
+            (2, {"productivity.Productivity": 2}),
+        )
+
+    def test_get_productivities_fail_post(self) -> None:
+        request = RequestFactory().post("productivity/")
+        response = get_productivities(request)
+
+        self.assertEqual(response.status_code, 405)
+
+    def test_index_fail_head(self) -> None:
+        request = RequestFactory().head("productivity/")
         response = index(request)
 
         self.assertEqual(response.status_code, 405)
