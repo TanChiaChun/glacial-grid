@@ -3,6 +3,7 @@ import logging
 from datetime import date, datetime
 from pathlib import Path
 
+from django.core.exceptions import ValidationError
 from django.test import RequestFactory, TestCase
 
 # pylint: disable=wrong-import-order
@@ -20,6 +21,82 @@ class ProductivityModelTests(TestCase):
             frequency=0,
             group="Next",
             last_check=datetime(2024, 1, 1),
+        )
+
+    def test_deserialize_json(self) -> None:
+        j = {
+            "item": "Calendar",
+            "frequency": "Key",
+            "group": "Next",
+            "last_check": "2024-01-01T00:00:00",
+            "last_check_undo": "0001-01-01T00:00:00",
+        }
+        productivity = Productivity.deserialize_json(j)
+
+        self.assertEqual(productivity.item, "Calendar")
+        self.assertEqual(productivity.frequency, 0)
+        self.assertEqual(productivity.group, "Next")
+        self.assertEqual(productivity.last_check, datetime(2024, 1, 1))
+        self.assertEqual(productivity.last_check_undo, datetime.min)
+
+    def test_deserialize_json_key_error(self) -> None:
+        j = {
+            "ite": "Calendar",
+            "frequency": "Key",
+        }
+        with self.assertRaises(KeyError) as cm:
+            Productivity.deserialize_json(j)
+        self.assertEqual(cm.exception.args[0], "item")
+
+    def test_deserialize_json_validation_error_item(self) -> None:
+        j = {
+            "item": "Calendar" * 26,
+            "frequency": "Key",
+            "group": "Next",
+            "last_check": "2024-01-01T00:00:00",
+            "last_check_undo": "0001-01-01T00:00:00",
+        }
+        with self.assertRaises(ValidationError) as cm:
+            Productivity.deserialize_json(j)
+        self.assertIn("item", cm.exception.args[0])
+
+    def test_deserialize_json_validation_error_frequency(self) -> None:
+        j = {
+            "item": "Calendar",
+            "frequency": "Ke",
+        }
+        with self.assertRaises(ValidationError) as cm:
+            Productivity.deserialize_json(j)
+        self.assertEqual(
+            cm.exception.args[0], "Invalid enum name for Frequency"
+        )
+
+    def test_deserialize_json_validation_error_datetime(self) -> None:
+        j = {
+            "item": "Calendar",
+            "frequency": "Key",
+            "group": "Next",
+            "last_check": "",
+        }
+        with self.assertRaises(ValidationError) as cm:
+            Productivity.deserialize_json(j)
+        self.assertEqual(
+            cm.exception.args[0], "Invalid date_string format for last_check"
+        )
+
+    def test_parse_iso_datetime(self) -> None:
+        self.assertEqual(
+            Productivity.parse_iso_datetime(
+                "2024-01-01T00:00:00", "last_check"
+            ),
+            datetime(2024, 1, 1),
+        )
+
+    def test_parse_iso_datetime_validation_error(self) -> None:
+        with self.assertRaises(ValidationError) as cm:
+            Productivity.parse_iso_datetime("", "last_check")
+        self.assertEqual(
+            cm.exception.args[0], "Invalid date_string format for last_check"
         )
 
     def test_str(self) -> None:
