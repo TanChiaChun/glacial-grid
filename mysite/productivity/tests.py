@@ -203,7 +203,7 @@ class ProductivityModelTests(TestCase):
 
 
 class ViewsTest(TestCase):
-    def test_create_productivity_success(self) -> None:
+    def test_create_productivity(self) -> None:
         self.assertEqual(Productivity.objects.count(), 0)
 
         request = RequestFactory().post(
