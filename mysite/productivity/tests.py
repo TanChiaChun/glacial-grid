@@ -1,6 +1,6 @@
 import json
 import logging
-from datetime import date, datetime
+from datetime import date, datetime, time
 from pathlib import Path
 
 from django.core.exceptions import ValidationError
@@ -14,13 +14,39 @@ from productivity.views import create_productivity, index
 # pylint: enable=wrong-import-order
 
 
+def is_productivity_almost_equal(
+    first: Productivity, second: Productivity
+) -> bool:
+    """Compare Productivity objects and check if they are almost equal.
+
+    - `last_check` and `last_check_undo` attributes are only compared for date.
+
+    Args:
+        first:
+            Productivity object to be compared.
+        second:
+            Productivity object to be compared against.
+
+    Returns:
+        True if Productivity object is almost equal, False otherwise.
+    """
+    return (
+        (first.item == second.item)
+        and (first.frequency == second.frequency)
+        and (first.group == second.group)
+        and (first.last_check.date() == second.last_check.date())
+        and (first.last_check_undo.date() == second.last_check_undo.date())
+    )
+
+
 class ProductivityModelTests(TestCase):
     def setUp(self) -> None:
+        self.dt_today = datetime.combine(date.today(), time())
         self.productivity = Productivity(
             item="Calendar",
             frequency=0,
             group="Next",
-            last_check=datetime(2024, 1, 1),
+            last_check=self.dt_today,
         )
 
     def test_deserialize_json(self) -> None:
@@ -28,16 +54,14 @@ class ProductivityModelTests(TestCase):
             "item": "Calendar",
             "frequency": "Key",
             "group": "Next",
-            "last_check": "2024-01-01T00:00:00",
+            "last_check": self.dt_today.isoformat(),
             "last_check_undo": "0001-01-01T00:00:00",
         }
         productivity = Productivity.deserialize_json(j)
 
-        self.assertEqual(productivity.item, "Calendar")
-        self.assertEqual(productivity.frequency, 0)
-        self.assertEqual(productivity.group, "Next")
-        self.assertEqual(productivity.last_check, datetime(2024, 1, 1))
-        self.assertEqual(productivity.last_check_undo, datetime.min)
+        self.assertIs(
+            is_productivity_almost_equal(productivity, self.productivity), True
+        )
 
     def test_deserialize_json_key_error(self) -> None:
         j = {
@@ -101,7 +125,8 @@ class ProductivityModelTests(TestCase):
 
     def test_str(self) -> None:
         self.assertEqual(
-            str(self.productivity), "[Key-Next] Calendar (01 Jan 12:00 AM)"
+            str(self.productivity),
+            f"[Key-Next] Calendar ({self.dt_today.strftime('%d %b %I:%M %p')})",
         )
 
     def test_str_empty_instance(self) -> None:
@@ -126,7 +151,7 @@ class ProductivityModelTests(TestCase):
             "item": "Calendar",
             "frequency": "Key",
             "group": "Next",
-            "last_check": "2024-01-01T00:00:00",
+            "last_check": self.dt_today.isoformat(),
             "last_check_undo": "0001-01-01T00:00:00",
         }
         self.assertDictEqual(self.productivity.serialize_json(), expected)
@@ -147,18 +172,29 @@ class ProductivityModelTests(TestCase):
 
         productivities = Productivity.objects.all()
         self.assertEqual(len(productivities), 1)
-        self.assertEqual(productivities[0].item, "Calendar")
-        self.assertEqual(productivities[0].frequency, 0)
-        self.assertEqual(productivities[0].group, "Next")
-        self.assertEqual(productivities[0].last_check.date(), date.today())
-        self.assertEqual(productivities[0].last_check_undo, datetime.min)
+        expected = Productivity(
+            item="Calendar",
+            frequency=0,
+            group="Next",
+            last_check=self.dt_today,
+        )
+        self.assertIs(
+            is_productivity_almost_equal(productivities[0], expected), True
+        )
 
         self.productivity.item = "To-Do"
         self.productivity.save()
         productivities = Productivity.objects.all()
         self.assertEqual(len(productivities), 1)
-        self.assertEqual(productivities[0].item, "To-Do")
-        self.assertEqual(productivities[0].frequency, 0)
+        expected = Productivity(
+            item="To-Do",
+            frequency=0,
+            group="Next",
+            last_check=self.dt_today,
+        )
+        self.assertIs(
+            is_productivity_almost_equal(productivities[0], expected), True
+        )
 
         self.assertEqual(
             self.productivity.delete(), (1, {"productivity.Productivity": 1})
@@ -181,13 +217,18 @@ class ViewsTest(TestCase):
         j = json.loads(response.content)
         self.assertEqual(len(j), 6)
         self.assertIn("id", j)
-        self.assertEqual(j["item"], "Calendar")
-        self.assertEqual(j["frequency"], "Key")
-        self.assertEqual(j["group"], "Next")
-        self.assertIs(
-            j["last_check"].startswith(date.today().isoformat()), True
+        expected = Productivity(
+            item="Calendar",
+            frequency=0,
+            group="Next",
+            last_check=datetime.combine(date.today(), time()),
         )
-        self.assertEqual(j["last_check_undo"], "0001-01-01T00:00:00")
+        self.assertIs(
+            is_productivity_almost_equal(
+                Productivity.deserialize_json(j), expected
+            ),
+            True,
+        )
 
         self.assertEqual(Productivity.objects.count(), 1)
 
