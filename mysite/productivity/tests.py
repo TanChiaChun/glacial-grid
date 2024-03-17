@@ -309,8 +309,7 @@ class ViewsTest(TestCase):
     def test_get_productivities_zero_object(self) -> None:
         self.assertEqual(Productivity.objects.count(), 0)
 
-        request = RequestFactory().get("productivity/")
-        response = get_productivities(request)
+        response = get_productivities()
 
         self.assertListEqual(json.loads(response.content), [])
 
@@ -319,8 +318,7 @@ class ViewsTest(TestCase):
 
         self.productivity.save()
 
-        request = RequestFactory().get("productivity/")
-        response = get_productivities(request)
+        response = get_productivities()
 
         expected = [
             {
@@ -341,14 +339,14 @@ class ViewsTest(TestCase):
             (1, {"productivity.Productivity": 1}),
         )
 
-    def test_get_productivities_two_objects(self) -> None:
+    def test_index_get(self) -> None:
         self.assertEqual(Productivity.objects.count(), 0)
 
         self.productivity.save()
         Productivity(item="To-Do", frequency=0, group="Next").save()
 
         request = RequestFactory().get("productivity/")
-        response = get_productivities(request)
+        response = index(request)
 
         expected = [
             {
@@ -376,12 +374,6 @@ class ViewsTest(TestCase):
             Productivity.objects.all().delete(),
             (2, {"productivity.Productivity": 2}),
         )
-
-    def test_get_productivities_fail_post(self) -> None:
-        request = RequestFactory().post("productivity/")
-        response = get_productivities(request)
-
-        self.assertEqual(response.status_code, 405)
 
     def test_index_fail_head(self) -> None:
         request = RequestFactory().head("productivity/")

@@ -2,7 +2,7 @@
 
 from django.core.exceptions import ValidationError
 from django.http import HttpRequest, JsonResponse
-from django.views.decorators.http import require_GET, require_POST
+from django.views.decorators.http import require_POST
 
 from productivity.models import Productivity
 
@@ -40,17 +40,8 @@ def create_productivity(request: HttpRequest) -> JsonResponse:
     return JsonResponse(p.serialize_json(), status=201)
 
 
-@require_GET
-def get_productivities(request: HttpRequest) -> JsonResponse:
-    """Get list of Productivity objects.
-
-    Args:
-        request:
-            HttpRequest object.
-
-    Returns:
-        JSON Response of Productivity objects.
-    """
+def get_productivities() -> JsonResponse:
+    """Return list of Productivity objects."""
     productivities = Productivity.objects.all()
 
     return JsonResponse(
@@ -73,7 +64,7 @@ def index(request: HttpRequest) -> JsonResponse:
         JSON Response of Productivity object/objects or error message.
     """
     if request.method == "GET":
-        json_response = get_productivities(request)
+        json_response = get_productivities()
     elif request.method == "POST":
         json_response = create_productivity(request)
     else:
