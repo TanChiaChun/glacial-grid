@@ -311,6 +311,8 @@ class ViewsTest(TestCase):
 
         response = get_productivities()
 
+        self.assertEqual(response.status_code, 200)
+
         self.assertListEqual(json.loads(response.content), [])
 
     def test_get_productivities_one_object(self) -> None:
@@ -319,6 +321,8 @@ class ViewsTest(TestCase):
         self.productivity.save()
 
         response = get_productivities()
+
+        self.assertEqual(response.status_code, 200)
 
         expected = [
             {
@@ -347,6 +351,8 @@ class ViewsTest(TestCase):
 
         request = RequestFactory().get("productivity/")
         response = index(request)
+
+        self.assertEqual(response.status_code, 200)
 
         expected = [
             {
