@@ -228,8 +228,6 @@ class ViewsTest(TestCase):
         )
 
     def test_create_productivity(self) -> None:
-        self.assertEqual(Productivity.objects.count(), 0)
-
         request = RequestFactory().post(
             "productivity/",
             data={"item": "Calendar", "frequency": "0", "group": "Next"},
@@ -249,11 +247,6 @@ class ViewsTest(TestCase):
         )
 
         self.assertEqual(Productivity.objects.count(), 1)
-
-        self.assertEqual(
-            Productivity.objects.all().delete(),
-            (1, {"productivity.Productivity": 1}),
-        )
 
     def test_create_productivity_fail_get(self) -> None:
         request = RequestFactory().get("productivity/")
@@ -307,8 +300,6 @@ class ViewsTest(TestCase):
         )
 
     def test_get_productivities_zero_object(self) -> None:
-        self.assertEqual(Productivity.objects.count(), 0)
-
         response = get_productivities()
 
         self.assertEqual(response.status_code, 200)
@@ -316,8 +307,6 @@ class ViewsTest(TestCase):
         self.assertListEqual(json.loads(response.content), [])
 
     def test_get_productivities_one_object(self) -> None:
-        self.assertEqual(Productivity.objects.count(), 0)
-
         self.productivity.save()
 
         response = get_productivities()
@@ -338,14 +327,7 @@ class ViewsTest(TestCase):
         reset_last_check_time(productivities)
         self.assertListEqual(productivities, expected)
 
-        self.assertEqual(
-            Productivity.objects.all().delete(),
-            (1, {"productivity.Productivity": 1}),
-        )
-
     def test_index_get(self) -> None:
-        self.assertEqual(Productivity.objects.count(), 0)
-
         self.productivity.save()
         Productivity(item="To-Do", frequency=0, group="Next").save()
 
@@ -375,11 +357,6 @@ class ViewsTest(TestCase):
         productivities = json.loads(response.content)
         reset_last_check_time(productivities)
         self.assertListEqual(productivities, expected)
-
-        self.assertEqual(
-            Productivity.objects.all().delete(),
-            (2, {"productivity.Productivity": 2}),
-        )
 
     def test_index_fail_head(self) -> None:
         request = RequestFactory().head("productivity/")
