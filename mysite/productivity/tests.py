@@ -358,8 +358,8 @@ class ViewsTest(TestCase):
         reset_last_check_time(productivities)
         self.assertListEqual(productivities, expected)
 
-    def test_index_fail_head(self) -> None:
-        request = RequestFactory().head("productivity/")
+    def test_index_fail_put(self) -> None:
+        request = RequestFactory().put("productivity/")
         response = index(request)
 
         self.assertEqual(response.status_code, 405)
