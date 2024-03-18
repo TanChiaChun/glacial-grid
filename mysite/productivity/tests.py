@@ -9,7 +9,13 @@ from django.test import RequestFactory, TestCase
 # pylint: disable=wrong-import-order
 from mysite.settings import LOGGING
 from productivity.models import Productivity, logger
-from productivity.views import create_productivity, get_productivities, index
+from productivity.views import (
+    create_productivity,
+    get_productivities,
+    get_productivity,
+    index,
+    index_detail,
+)
 
 # pylint: enable=wrong-import-order
 
@@ -299,6 +305,34 @@ class ViewsTest(TestCase):
             json.loads(response.content), {"error": "Data validation error"}
         )
 
+    def test_get_productivity(self) -> None:
+        self.productivity.save()
+
+        response = get_productivity(1)
+
+        self.assertEqual(response.status_code, 200)
+
+        expected = {
+            "id": "1",
+            "item": "Calendar",
+            "frequency": "Key",
+            "group": "Next",
+            "last_check": self.dt_today.isoformat(),
+            "last_check_undo": "0001-01-01T00:00:00",
+        }
+        productivity = json.loads(response.content)
+        reset_last_check_time([productivity])
+        self.assertDictEqual(productivity, expected)
+
+    def test_get_productivity_not_exist(self) -> None:
+        response = get_productivity(1)
+
+        self.assertEqual(response.status_code, 404)
+
+        self.assertDictEqual(
+            json.loads(response.content), {"error": "ID not found"}
+        )
+
     def test_get_productivities_zero_object(self) -> None:
         response = get_productivities()
 
@@ -361,6 +395,16 @@ class ViewsTest(TestCase):
     def test_index_fail_put(self) -> None:
         request = RequestFactory().put("productivity/")
         response = index(request)
+
+        self.assertEqual(response.status_code, 405)
+        self.assertDictEqual(
+            json.loads(response.content),
+            {"error": "Request method not allowed"},
+        )
+
+    def test_index_detail_fail_post(self) -> None:
+        request = RequestFactory().post("productivity/1/")
+        response = index_detail(request, 1)
 
         self.assertEqual(response.status_code, 405)
         self.assertDictEqual(

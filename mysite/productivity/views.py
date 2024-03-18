@@ -40,6 +40,25 @@ def create_productivity(request: HttpRequest) -> JsonResponse:
     return JsonResponse(p.serialize_json(), status=201)
 
 
+def get_productivity(productivity_id: int) -> JsonResponse:
+    """Get a Productivity object by ID (primary key).
+
+    Args:
+        productivity_id:
+            ID (primary key) of Productivity object.
+
+    Returns:
+        JSON Response of Productivity object or error message.
+    """
+    try:
+        productivity = Productivity.objects.get(pk=productivity_id)
+        json_response = JsonResponse(productivity.serialize_json())
+    except Productivity.DoesNotExist:
+        json_response = JsonResponse({"error": "ID not found"}, status=404)
+
+    return json_response
+
+
 def get_productivities() -> JsonResponse:
     """Return list of Productivity objects."""
     productivities = Productivity.objects.all()
@@ -67,6 +86,28 @@ def index(request: HttpRequest) -> JsonResponse:
         json_response = get_productivities()
     elif request.method == "POST":
         json_response = create_productivity(request)
+    else:
+        json_response = JsonResponse(
+            {"error": "Request method not allowed"}, status=405
+        )
+
+    return json_response
+
+
+def index_detail(request: HttpRequest, productivity_id: int) -> JsonResponse:
+    """Get Productivity object.
+
+    Args:
+        request:
+            HttpRequest object.
+        productivity_id:
+            `id` field (primary key) of Productivity object.
+
+    Returns:
+        JSON Response of Productivity object or error message.
+    """
+    if request.method == "GET":
+        json_response = get_productivity(productivity_id)
     else:
         json_response = JsonResponse(
             {"error": "Request method not allowed"}, status=405
