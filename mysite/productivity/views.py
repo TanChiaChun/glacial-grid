@@ -52,11 +52,10 @@ def get_productivity(productivity_id: int) -> JsonResponse:
     """
     try:
         productivity = Productivity.objects.get(pk=productivity_id)
-        json_response = JsonResponse(productivity.serialize_json())
     except Productivity.DoesNotExist:
-        json_response = JsonResponse({"error": "ID not found"}, status=404)
+        return JsonResponse({"error": "ID not found"}, status=404)
 
-    return json_response
+    return JsonResponse(productivity.serialize_json())
 
 
 def get_productivities() -> JsonResponse:
