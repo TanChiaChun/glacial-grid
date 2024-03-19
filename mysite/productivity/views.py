@@ -1,31 +1,28 @@
 """Views for productivity app."""
 
+from typing import cast
+
 from django.core.exceptions import ValidationError
-from django.http import HttpRequest, JsonResponse
-from django.views.decorators.http import require_POST
+from django.http import HttpRequest, JsonResponse, QueryDict
 
 from productivity.models import Productivity
 
 
-@require_POST
-def create_productivity(request: HttpRequest) -> JsonResponse:
+def create_productivity(request_post: QueryDict) -> JsonResponse:
     """Create Productivity object.
 
     Args:
-        request:
-            HttpRequest object, with below data in body.
-                - item
-                - frequency
-                - group
+        request_post:
+            QueryDict object.
 
     Returns:
         JSON Response of Productivity object or error message.
     """
     try:
         p = Productivity(
-            item=request.POST["item"],
-            frequency=int(request.POST["frequency"]),
-            group=request.POST["group"],
+            item=cast(str, request_post["item"]),
+            frequency=int(cast(str, request_post["frequency"])),
+            group=cast(str, request_post["group"]),
         )
     except KeyError:
         return JsonResponse({"error": "Missing data"}, status=400)
@@ -84,7 +81,7 @@ def index(request: HttpRequest) -> JsonResponse:
     if request.method == "GET":
         json_response = get_productivities()
     elif request.method == "POST":
-        json_response = create_productivity(request)
+        json_response = create_productivity(request.POST)
     else:
         json_response = JsonResponse(
             {"error": "Request method not allowed"}, status=405
