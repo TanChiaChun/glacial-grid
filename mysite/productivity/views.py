@@ -38,7 +38,7 @@ def create_productivity(request_post: QueryDict) -> JsonResponse:
     return JsonResponse(p.serialize_json(), status=201)
 
 
-def get_productivity(productivity_id: int) -> JsonResponse:
+def get_productivity_object(productivity_id: int) -> Productivity:
     """Get a Productivity object by ID (primary key).
 
     Args:
@@ -46,14 +46,13 @@ def get_productivity(productivity_id: int) -> JsonResponse:
             ID (primary key) of Productivity object.
 
     Returns:
-        JSON Response of Productivity object or error message.
-    """
-    try:
-        productivity = Productivity.objects.get(pk=productivity_id)
-    except Productivity.DoesNotExist:
-        return JsonResponse({"error": "ID not found"}, status=404)
+        Productivity object.
 
-    return JsonResponse(productivity.serialize_json())
+    Raises:
+        productivity.models.Productivity.DoesNotExist:
+            Productivity object not found.
+    """
+    return Productivity.objects.get(pk=productivity_id)
 
 
 def get_productivities() -> JsonResponse:
@@ -101,7 +100,12 @@ def index_detail(request: HttpRequest, productivity_id: int) -> JsonResponse:
     Returns:
         JSON Response of Productivity object or error message.
     """
+    try:
+        productivity = get_productivity_object(productivity_id)
+    except Productivity.DoesNotExist:
+        return JsonResponse({"error": "ID not found"}, status=404)
+
     if request.method == "GET":
-        json_response = get_productivity(productivity_id)
+        json_response = JsonResponse(productivity.serialize_json())
 
     return json_response
