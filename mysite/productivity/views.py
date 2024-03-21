@@ -4,6 +4,7 @@ from typing import cast
 
 from django.core.exceptions import ValidationError
 from django.http import HttpRequest, JsonResponse, QueryDict
+from django.views.decorators.http import require_http_methods
 
 from productivity.models import Productivity
 
@@ -64,6 +65,7 @@ def get_productivities() -> JsonResponse:
     )
 
 
+@require_http_methods(["GET", "POST"])
 def index(request: HttpRequest) -> JsonResponse:
     """Get Productivity objects if GET, create Productivity object if POST.
 
@@ -82,14 +84,11 @@ def index(request: HttpRequest) -> JsonResponse:
         json_response = get_productivities()
     elif request.method == "POST":
         json_response = create_productivity(request.POST)
-    else:
-        json_response = JsonResponse(
-            {"error": "Request method not allowed"}, status=405
-        )
 
     return json_response
 
 
+@require_http_methods(["GET"])
 def index_detail(request: HttpRequest, productivity_id: int) -> JsonResponse:
     """Get Productivity object.
 
@@ -104,9 +103,5 @@ def index_detail(request: HttpRequest, productivity_id: int) -> JsonResponse:
     """
     if request.method == "GET":
         json_response = get_productivity(productivity_id)
-    else:
-        json_response = JsonResponse(
-            {"error": "Request method not allowed"}, status=405
-        )
 
     return json_response

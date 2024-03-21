@@ -407,20 +407,12 @@ class ViewsTest(TestCase):
         response = index(request)
 
         self.assertEqual(response.status_code, 405)
-        self.assertDictEqual(
-            json.loads(response.content),
-            {"error": "Request method not allowed"},
-        )
 
     def test_index_detail_fail_post(self) -> None:
         request = RequestFactory().post("productivity/1/")
         response = index_detail(request, 1)
 
         self.assertEqual(response.status_code, 405)
-        self.assertDictEqual(
-            json.loads(response.content),
-            {"error": "Request method not allowed"},
-        )
 
 
 # pylint: disable-next=invalid-name
