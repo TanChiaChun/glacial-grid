@@ -25,6 +25,7 @@ def is_productivity_almost_equal(
 ) -> bool:
     """Compare Productivity objects and check if they are almost equal.
 
+    - `id` attribute is only compared if not `None`.
     - `last_check` and `last_check_undo` attributes are only compared for date.
 
     Args:
@@ -37,7 +38,8 @@ def is_productivity_almost_equal(
         True if Productivity object is almost equal, False otherwise.
     """
     return (
-        (first.item == second.item)
+        ((first.id == second.id) if (first.id is not None) else True)
+        and (first.item == second.item)
         and (first.frequency == second.frequency)
         and (first.group == second.group)
         and (first.last_check.date() == second.last_check.date())
@@ -194,6 +196,7 @@ class ProductivityModelTests(TestCase):
         productivities = Productivity.objects.all()
         self.assertEqual(len(productivities), 1)
         expected = Productivity(
+            id=1,
             item="Calendar",
             frequency=0,
             group="Next",
@@ -208,6 +211,7 @@ class ProductivityModelTests(TestCase):
         productivities = Productivity.objects.all()
         self.assertEqual(len(productivities), 1)
         expected = Productivity(
+            id=1,
             item="To-Do",
             frequency=0,
             group="Next",
@@ -303,6 +307,7 @@ class ViewsTest(TestCase):
         self.productivity.save()
 
         expected = Productivity(
+            id=1,
             item="Calendar",
             frequency=0,
             group="Next",
