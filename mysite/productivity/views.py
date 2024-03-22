@@ -20,7 +20,7 @@ def create_productivity(request_post: QueryDict) -> JsonResponse:
         JSON Response of Productivity object or error message.
     """
     try:
-        p = Productivity(
+        productivity = Productivity(
             item=cast(str, request_post["item"]),
             frequency=int(cast(str, request_post["frequency"])),
             group=cast(str, request_post["group"]),
@@ -29,13 +29,13 @@ def create_productivity(request_post: QueryDict) -> JsonResponse:
         return JsonResponse({"error": "Missing data"}, status=400)
 
     try:
-        p.clean_fields()
+        productivity.clean_fields()
     except ValidationError:
         return JsonResponse({"error": "Data validation error"}, status=400)
 
-    p.save()
+    productivity.save()
 
-    return JsonResponse(p.serialize_json(), status=201)
+    return JsonResponse(productivity.serialize_json(), status=201)
 
 
 def get_productivity_object(productivity_id: int) -> Productivity:
