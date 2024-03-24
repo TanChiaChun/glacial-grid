@@ -167,6 +167,20 @@ class ProductivityModelTests(TestCase):
                 "Invalid enum value for Frequency",
             )
 
+    def test_save(self) -> None:
+        self.productivity.save()
+
+        self.assertEqual(Productivity.objects.count(), 1)
+
+    def test_save_invalid_data(self) -> None:
+        self.productivity.frequency = 10
+
+        with self.assertRaises(ValidationError) as cm:
+            self.productivity.save()
+        self.assertIn("frequency", cm.exception.args[0])
+
+        self.assertEqual(Productivity.objects.count(), 0)
+
     def test_serialize_json(self) -> None:
         self.productivity.id = 1
         expected = {

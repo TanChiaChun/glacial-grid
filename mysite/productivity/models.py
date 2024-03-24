@@ -117,6 +117,18 @@ class Productivity(models.Model):
 
         return frequency_name
 
+    def save(self, *args, **kwargs) -> None:  # type: ignore[no-untyped-def]
+        """Override method in base class.
+
+        - Validate model fields before save.
+
+        Raises:
+            django.core.exceptions.ValidationError:
+                Invalid field data.
+        """
+        self.clean_fields()
+        super().save(*args, **kwargs)
+
     def serialize_json(self) -> dict[str, str]:
         """Serialize model to JSON.
 

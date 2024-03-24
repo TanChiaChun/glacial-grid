@@ -32,11 +32,9 @@ def create_productivity(request_post: QueryDict) -> JsonResponse:
         return JsonResponse({"error": "Missing data"}, status=400)
 
     try:
-        productivity.clean_fields()
+        productivity.save()
     except ValidationError:
         return JsonResponse({"error": "Data validation error"}, status=400)
-
-    productivity.save()
 
     return JsonResponse(productivity.serialize_json(), status=201)
 
