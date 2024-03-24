@@ -14,7 +14,10 @@ def create_productivity(request_post: QueryDict) -> JsonResponse:
 
     Args:
         request_post:
-            QueryDict object.
+            `QueryDict` object with Productivity fields.
+                - item
+                - frequency
+                - group
 
     Returns:
         JSON Response of Productivity object or error message.
@@ -66,7 +69,7 @@ def get_productivities() -> JsonResponse:
 
 @require_http_methods(["GET", "POST"])
 def index(request: HttpRequest) -> JsonResponse:
-    """Get Productivity objects if GET, create Productivity object if POST.
+    """Get Productivity objects if GET, create if POST.
 
     Args:
         request:
