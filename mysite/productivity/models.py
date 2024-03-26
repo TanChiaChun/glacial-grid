@@ -120,13 +120,18 @@ class Productivity(models.Model):
     def save(self, *args, **kwargs) -> None:  # type: ignore[no-untyped-def]
         """Override method in base class.
 
+        - Copy `last_check` to `last_check_undo` if not None.
         - Validate model fields before save.
 
         Raises:
             django.core.exceptions.ValidationError:
                 Invalid field data.
         """
+        if self.last_check:
+            self.last_check_undo = self.last_check
+
         self.clean_fields()
+
         super().save(*args, **kwargs)
 
     def serialize_json(self) -> dict[str, str]:

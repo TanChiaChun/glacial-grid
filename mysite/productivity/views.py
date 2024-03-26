@@ -88,9 +88,9 @@ def index(request: HttpRequest) -> JsonResponse:
     return json_response
 
 
-@require_http_methods(["GET"])
+@require_http_methods(["GET", "PUT"])
 def index_detail(request: HttpRequest, productivity_id: int) -> JsonResponse:
-    """Get Productivity object.
+    """Get Productivity object if GET, update if PUT.
 
     Args:
         request:
@@ -108,5 +108,59 @@ def index_detail(request: HttpRequest, productivity_id: int) -> JsonResponse:
 
     if request.method == "GET":
         json_response = JsonResponse(productivity.serialize_json())
+    elif request.method == "PUT":
+        json_response = update_productivity(
+            productivity, QueryDict(request.body)
+        )
 
     return json_response
+
+
+def update_productivity(
+    productivity: Productivity, request_body: QueryDict
+) -> JsonResponse:
+    """Update Productivity object.
+
+    Args:
+        productivity:
+            Productivity object to be updated.
+        request_body:
+            `QueryDict` object with Productivity fields.
+                - item
+                - frequency
+                - group
+                - last_check (empty string for auto_now)
+
+    Returns:
+        JSON Response of Productivity object or error message.
+    """
+    try:
+        productivity.item = cast(str, request_body["item"])
+        productivity.frequency = int(cast(str, request_body["frequency"]))
+        productivity.group = cast(str, request_body["group"])
+        last_check_str = cast(str, request_body["last_check"])
+    except KeyError:
+        return JsonResponse({"error": "Missing data"}, status=400)
+
+    if last_check_str != "":
+        try:
+            last_check = Productivity.parse_iso_datetime(
+                last_check_str, "last_check"
+            )
+        except ValidationError:
+            return JsonResponse(
+                {"error": "Invalid data for last_check"}, status=400
+            )
+
+    try:
+        productivity.save()
+    except ValidationError:
+        return JsonResponse({"error": "Data validation error"}, status=400)
+
+    if last_check_str != "":
+        Productivity.objects.filter(id__exact=productivity.id).update(
+            last_check=last_check
+        )
+        productivity.refresh_from_db()
+
+    return JsonResponse(productivity.serialize_json())

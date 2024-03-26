@@ -4,6 +4,7 @@ from datetime import date, datetime, time
 from pathlib import Path
 
 from django.core.exceptions import ValidationError
+from django.http import QueryDict
 from django.test import RequestFactory, TestCase
 
 # pylint: disable=wrong-import-order
@@ -15,6 +16,7 @@ from productivity.views import (
     get_productivity_object,
     index,
     index_detail,
+    update_productivity,
 )
 
 # pylint: enable=wrong-import-order
@@ -48,7 +50,7 @@ def is_productivity_almost_equal(
 
 
 def reset_last_check_time(json_objs: list[dict[str, str]]) -> None:
-    """Reset time of each `last_check`'s value.
+    """Reset time of each `last_check`'s & `last_check_undo`'s value.
 
     Args:
         json_objs:
@@ -56,10 +58,11 @@ def reset_last_check_time(json_objs: list[dict[str, str]]) -> None:
 
     Raises:
         KeyError:
-            `last_check` key not found.
+            Key not found.
     """
     for j in json_objs:
         j["last_check"] = j["last_check"][0:11] + "00:00:00"
+        j["last_check_undo"] = j["last_check_undo"][0:11] + "00:00:00"
 
 
 class ProductivityModelTests(TestCase):
@@ -69,7 +72,6 @@ class ProductivityModelTests(TestCase):
             item="Calendar",
             frequency=0,
             group="Next",
-            last_check=self.dt_today,
         )
 
     def test_deserialize_json(self) -> None:
@@ -82,6 +84,7 @@ class ProductivityModelTests(TestCase):
         }
         productivity = Productivity.deserialize_json(j)
 
+        self.productivity.last_check = self.dt_today
         self.assertIs(
             is_productivity_almost_equal(productivity, self.productivity), True
         )
@@ -147,6 +150,7 @@ class ProductivityModelTests(TestCase):
         )
 
     def test_str(self) -> None:
+        self.productivity.last_check = self.dt_today
         self.assertEqual(
             str(self.productivity),
             f"[Key-Next] Calendar ({self.dt_today.strftime('%d %b %I:%M %p')})",
@@ -167,10 +171,18 @@ class ProductivityModelTests(TestCase):
                 "Invalid enum value for Frequency",
             )
 
-    def test_save(self) -> None:
+    def test_save_new_object(self) -> None:
         self.productivity.save()
 
         self.assertEqual(Productivity.objects.count(), 1)
+        self.assertEqual(self.productivity.last_check_undo, datetime.min)
+
+    def test_save_existing_object(self) -> None:
+        self.productivity.last_check = self.dt_today
+        self.productivity.save()
+
+        self.assertEqual(Productivity.objects.count(), 1)
+        self.assertEqual(self.productivity.last_check_undo, self.dt_today)
 
     def test_save_invalid_data(self) -> None:
         self.productivity.frequency = 10
@@ -183,6 +195,7 @@ class ProductivityModelTests(TestCase):
 
     def test_serialize_json(self) -> None:
         self.productivity.id = 1
+        self.productivity.last_check = self.dt_today
         expected = {
             "id": "1",
             "item": "Calendar",
@@ -230,6 +243,7 @@ class ProductivityModelTests(TestCase):
             frequency=0,
             group="Next",
             last_check=self.dt_today,
+            last_check_undo=self.dt_today,
         )
         self.assertIs(
             is_productivity_almost_equal(productivities[0], expected), True
@@ -248,7 +262,6 @@ class ViewsTest(TestCase):
             item="Calendar",
             frequency=0,
             group="Next",
-            last_check=self.dt_today,
         )
 
     def test_create_productivity(self) -> None:
@@ -263,6 +276,8 @@ class ViewsTest(TestCase):
         j = json.loads(response.content)
         self.assertEqual(len(j), 6)
         self.assertIn("id", j)
+
+        self.productivity.last_check = self.dt_today
         self.assertIs(
             is_productivity_almost_equal(
                 Productivity.deserialize_json(j), self.productivity
@@ -403,6 +418,8 @@ class ViewsTest(TestCase):
         response = index(request)
 
         self.assertEqual(response.status_code, 201)
+
+        self.productivity.last_check = self.dt_today
         self.assertIs(
             is_productivity_almost_equal(
                 Productivity.deserialize_json(json.loads(response.content)),
@@ -452,6 +469,93 @@ class ViewsTest(TestCase):
         response = index_detail(request, 1)
 
         self.assertEqual(response.status_code, 405)
+
+    def test_update_productivity_auto_last_check(self) -> None:
+        self.productivity.save()
+
+        response = update_productivity(
+            self.productivity,
+            QueryDict("item=To-Do&frequency=1&group=Next1&last_check="),
+        )
+
+        self.assertEqual(response.status_code, 200)
+
+        expected = {
+            "id": "1",
+            "item": "To-Do",
+            "frequency": "Loop",
+            "group": "Next1",
+            "last_check": self.dt_today.isoformat(),
+            "last_check_undo": self.dt_today.isoformat(),
+        }
+        productivity = json.loads(response.content)
+        reset_last_check_time([productivity])
+        self.assertDictEqual(productivity, expected)
+
+    def test_update_productivity_manual_last_check(self) -> None:
+        self.productivity.save()
+
+        response = update_productivity(
+            self.productivity,
+            QueryDict(
+                (
+                    "item=To-Do&frequency=1&group=Next1&"
+                    "last_check=2024-03-25T00%3A00%3A00"
+                )
+            ),
+        )
+
+        self.assertEqual(response.status_code, 200)
+
+        expected = {
+            "id": "1",
+            "item": "To-Do",
+            "frequency": "Loop",
+            "group": "Next1",
+            "last_check": datetime(2024, 3, 25).isoformat(),
+            "last_check_undo": self.dt_today.isoformat(),
+        }
+        productivity = json.loads(response.content)
+        reset_last_check_time([productivity])
+        self.assertDictEqual(productivity, expected)
+
+    def test_update_productivity_fail_missing_data(self) -> None:
+        self.productivity.save()
+
+        response = update_productivity(self.productivity, QueryDict(""))
+
+        self.assertEqual(response.status_code, 400)
+        self.assertDictEqual(
+            json.loads(response.content), {"error": "Missing data"}
+        )
+
+    def test_update_productivity_fail_invalid_last_check(self) -> None:
+        self.productivity.save()
+
+        response = update_productivity(
+            self.productivity,
+            QueryDict("item=To-Do&frequency=1&group=Next1&last_check=a"),
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertDictEqual(
+            json.loads(response.content),
+            {"error": "Invalid data for last_check"},
+        )
+
+    def test_update_productivity_fail_data_validation(self) -> None:
+        self.productivity.save()
+
+        response = update_productivity(
+            self.productivity,
+            QueryDict("item=To-Do&frequency=10&group=Next1&last_check="),
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertDictEqual(
+            json.loads(response.content),
+            {"error": "Data validation error"},
+        )
 
 
 # pylint: disable-next=invalid-name
