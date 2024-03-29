@@ -39,6 +39,24 @@ def create_productivity(request_post: QueryDict) -> JsonResponse:
     return JsonResponse(productivity.serialize_json(), status=201)
 
 
+def get_productivity(productivity_id: int) -> JsonResponse:
+    """Get Productivity object.
+
+    Args:
+        productivity_id:
+            ID (primary key) of Productivity object.
+
+    Returns:
+        JSON Response of Productivity object or error message.
+    """
+    try:
+        productivity = get_productivity_object(productivity_id)
+    except Productivity.DoesNotExist:
+        return JsonResponse({"error": "ID not found"}, status=404)
+
+    return JsonResponse(productivity.serialize_json())
+
+
 def get_productivity_object(productivity_id: int) -> Productivity:
     """Get a Productivity object by ID (primary key).
 
@@ -101,29 +119,24 @@ def index_detail(request: HttpRequest, productivity_id: int) -> JsonResponse:
     Returns:
         JSON Response of Productivity object or error message.
     """
-    try:
-        productivity = get_productivity_object(productivity_id)
-    except Productivity.DoesNotExist:
-        return JsonResponse({"error": "ID not found"}, status=404)
-
     if request.method == "GET":
-        json_response = JsonResponse(productivity.serialize_json())
+        json_response = get_productivity(productivity_id)
     elif request.method == "PUT":
         json_response = update_productivity(
-            productivity, QueryDict(request.body)
+            productivity_id, QueryDict(request.body)
         )
 
     return json_response
 
 
 def update_productivity(
-    productivity: Productivity, request_body: QueryDict
+    productivity_id: int, request_body: QueryDict
 ) -> JsonResponse:
     """Update Productivity object.
 
     Args:
-        productivity:
-            Productivity object to be updated.
+        productivity_id:
+            ID (primary key) of Productivity object.
         request_body:
             `QueryDict` object with Productivity fields.
                 - item
@@ -134,6 +147,11 @@ def update_productivity(
     Returns:
         JSON Response of Productivity object or error message.
     """
+    try:
+        productivity = get_productivity_object(productivity_id)
+    except Productivity.DoesNotExist:
+        return JsonResponse({"error": "ID not found"}, status=404)
+
     try:
         productivity.item = cast(str, request_body["item"])
         productivity.frequency = int(cast(str, request_body["frequency"]))

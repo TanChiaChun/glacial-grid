@@ -13,6 +13,7 @@ from productivity.models import Productivity, logger
 from productivity.views import (
     create_productivity,
     get_productivities,
+    get_productivity,
     get_productivity_object,
     index,
     index_detail,
@@ -332,6 +333,34 @@ class ViewsTest(TestCase):
             json.loads(response.content), {"error": "Data validation error"}
         )
 
+    def test_get_productivity(self) -> None:
+        self.productivity.save()
+
+        response = get_productivity(1)
+
+        self.assertEqual(response.status_code, 200)
+
+        expected = {
+            "id": "1",
+            "item": "Calendar",
+            "frequency": "Key",
+            "group": "Next",
+            "last_check": self.dt_today.isoformat(),
+            "last_check_undo": "0001-01-01T00:00:00",
+        }
+        productivity = json.loads(response.content)
+        reset_last_check_time([productivity])
+        self.assertDictEqual(productivity, expected)
+
+    def test_get_productivity_not_exist(self) -> None:
+        response = get_productivity(1)
+
+        self.assertEqual(response.status_code, 404)
+
+        self.assertDictEqual(
+            json.loads(response.content), {"error": "ID not found"}
+        )
+
     def test_get_productivity_object(self) -> None:
         self.productivity.save()
 
@@ -347,7 +376,7 @@ class ViewsTest(TestCase):
             True,
         )
 
-    def test_get_productivity_not_exist(self) -> None:
+    def test_get_productivity_object_not_exist(self) -> None:
         with self.assertRaises(Productivity.DoesNotExist):
             get_productivity_object(1)
 
@@ -454,16 +483,6 @@ class ViewsTest(TestCase):
         reset_last_check_time([productivity])
         self.assertDictEqual(productivity, expected)
 
-    def test_index_detail_get_not_exist(self) -> None:
-        request = RequestFactory().get("productivity/1/")
-        response = index_detail(request, 1)
-
-        self.assertEqual(response.status_code, 404)
-
-        self.assertDictEqual(
-            json.loads(response.content), {"error": "ID not found"}
-        )
-
     def test_index_detail_fail_post(self) -> None:
         request = RequestFactory().post("productivity/1/")
         response = index_detail(request, 1)
@@ -474,7 +493,7 @@ class ViewsTest(TestCase):
         self.productivity.save()
 
         response = update_productivity(
-            self.productivity,
+            self.productivity.id,
             QueryDict("item=To-Do&frequency=1&group=Next1&last_check="),
         )
 
@@ -496,7 +515,7 @@ class ViewsTest(TestCase):
         self.productivity.save()
 
         response = update_productivity(
-            self.productivity,
+            self.productivity.id,
             QueryDict(
                 (
                     "item=To-Do&frequency=1&group=Next1&"
@@ -519,10 +538,19 @@ class ViewsTest(TestCase):
         reset_last_check_time([productivity])
         self.assertDictEqual(productivity, expected)
 
+    def test_update_productivity_fail_not_exist(self) -> None:
+        response = update_productivity(1, QueryDict(""))
+
+        self.assertEqual(response.status_code, 404)
+
+        self.assertDictEqual(
+            json.loads(response.content), {"error": "ID not found"}
+        )
+
     def test_update_productivity_fail_missing_data(self) -> None:
         self.productivity.save()
 
-        response = update_productivity(self.productivity, QueryDict(""))
+        response = update_productivity(self.productivity.id, QueryDict(""))
 
         self.assertEqual(response.status_code, 400)
         self.assertDictEqual(
@@ -533,7 +561,7 @@ class ViewsTest(TestCase):
         self.productivity.save()
 
         response = update_productivity(
-            self.productivity,
+            self.productivity.id,
             QueryDict("item=To-Do&frequency=1&group=Next1&last_check=a"),
         )
 
@@ -547,7 +575,7 @@ class ViewsTest(TestCase):
         self.productivity.save()
 
         response = update_productivity(
-            self.productivity,
+            self.productivity.id,
             QueryDict("item=To-Do&frequency=10&group=Next1&last_check="),
         )
 
