@@ -12,6 +12,7 @@ from mysite.settings import LOGGING
 from productivity.models import Productivity, logger
 from productivity.views import (
     create_productivity,
+    delete_productivity,
     get_productivities,
     get_productivity,
     get_productivity_object,
@@ -331,6 +332,23 @@ class ViewsTest(TestCase):
         self.assertEqual(response.status_code, 400)
         self.assertDictEqual(
             json.loads(response.content), {"error": "Data validation error"}
+        )
+
+    def test_delete_productivity(self) -> None:
+        self.productivity.save()
+        self.assertEqual(Productivity.objects.count(), 1)
+
+        response = delete_productivity(self.productivity.id)
+
+        self.assertEqual(response.status_code, 204)
+        self.assertEqual(Productivity.objects.count(), 0)
+
+    def test_delete_productivity_not_exist(self) -> None:
+        response = delete_productivity(1)
+
+        self.assertEqual(response.status_code, 404)
+        self.assertDictEqual(
+            json.loads(response.content), {"error": "ID not found"}
         )
 
     def test_get_productivity(self) -> None:

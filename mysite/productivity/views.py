@@ -39,6 +39,26 @@ def create_productivity(request_post: QueryDict) -> JsonResponse:
     return JsonResponse(productivity.serialize_json(), status=201)
 
 
+def delete_productivity(productivity_id: int) -> JsonResponse:
+    """Delete Productivity object.
+
+    Args:
+        productivity_id:
+            ID (primary key) of Productivity object.
+
+    Returns:
+        JSON Response message or error message.
+    """
+    try:
+        productivity = get_productivity_object(productivity_id)
+    except Productivity.DoesNotExist:
+        return JsonResponse({"error": "ID not found"}, status=404)
+
+    productivity.delete()
+
+    return JsonResponse({}, status=204)
+
+
 def get_productivity(productivity_id: int) -> JsonResponse:
     """Get Productivity object.
 
@@ -106,9 +126,9 @@ def index(request: HttpRequest) -> JsonResponse:
     return json_response
 
 
-@require_http_methods(["GET", "PUT"])
+@require_http_methods(["GET", "PUT", "DELETE"])
 def index_detail(request: HttpRequest, productivity_id: int) -> JsonResponse:
-    """Get Productivity object if GET, update if PUT.
+    """Get Productivity object if GET, update if PUT, delete if DELETE.
 
     Args:
         request:
@@ -117,7 +137,7 @@ def index_detail(request: HttpRequest, productivity_id: int) -> JsonResponse:
             `id` field (primary key) of Productivity object.
 
     Returns:
-        JSON Response of Productivity object or error message.
+        JSON Response of Productivity object, response or error message.
     """
     if request.method == "GET":
         json_response = get_productivity(productivity_id)
@@ -125,6 +145,8 @@ def index_detail(request: HttpRequest, productivity_id: int) -> JsonResponse:
         json_response = update_productivity(
             productivity_id, QueryDict(request.body)
         )
+    elif request.method == "DELETE":
+        json_response = delete_productivity(productivity_id)
 
     return json_response
 
