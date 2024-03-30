@@ -9,16 +9,20 @@ class ViewsTests(SimpleTestCase):
     def test_authentication_login_get(self) -> None:
         request = RequestFactory().get("/authentication/login/")
         response = authentication_login(request)
+
+        self.assertEqual(response.status_code, 401)
         self.assertDictEqual(
-            json.loads(response.content), {"info": "Login required"}
+            json.loads(response.content), {"error": "Login required"}
         )
 
     def test_authentication_login_fail_put(self) -> None:
         request = RequestFactory().put("/authentication/login/")
         response = authentication_login(request)
+
         self.assertEqual(response.status_code, 405)
 
     def test_csrftoken(self) -> None:
         request = RequestFactory().get("/authentication/csrftoken/")
         response = csrftoken(request)
+
         self.assertIn("csrftoken", response.cookies)

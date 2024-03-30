@@ -7,9 +7,20 @@ from django.views.decorators.http import require_http_methods
 
 @require_http_methods(["GET"])
 def authentication_login(request: HttpRequest) -> JsonResponse:
-    """URL for login redirection."""
+    """URL for login redirection.
+
+    - Return error message as intended to be redirected from other Views if not
+    logged in.
+
+    Args:
+        request:
+            HttpRequest object.
+
+    Returns:
+        JSON Response of error message.
+    """
     if request.method == "GET":
-        json_response = JsonResponse({"info": "Login required"})
+        json_response = JsonResponse({"error": "Login required"}, status=401)
 
     return json_response
 
