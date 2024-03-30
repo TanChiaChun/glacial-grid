@@ -268,7 +268,7 @@ class ViewsTest(TestCase):
 
     def test_create_productivity(self) -> None:
         request = RequestFactory().post(
-            "productivity/",
+            "",
             data={"item": "Calendar", "frequency": "0", "group": "Next"},
         )
         response = create_productivity(request.POST)
@@ -290,7 +290,7 @@ class ViewsTest(TestCase):
         self.assertEqual(Productivity.objects.count(), 1)
 
     def test_create_productivity_fail_missing_data(self) -> None:
-        request = RequestFactory().post("productivity/")
+        request = RequestFactory().post("")
         response = create_productivity(request.POST)
 
         self.assertEqual(response.status_code, 400)
@@ -300,7 +300,7 @@ class ViewsTest(TestCase):
 
     def test_create_productivity_fail_invalid_data_item(self) -> None:
         request = RequestFactory().post(
-            "productivity/",
+            "",
             data={"item": "Calendar" * 26, "frequency": "0", "group": "Next"},
         )
         response = create_productivity(request.POST)
@@ -312,7 +312,7 @@ class ViewsTest(TestCase):
 
     def test_create_productivity_fail_invalid_data_frequency(self) -> None:
         request = RequestFactory().post(
-            "productivity/",
+            "",
             data={"item": "Calendar", "frequency": "10", "group": "Next"},
         )
         response = create_productivity(request.POST)
@@ -324,7 +324,7 @@ class ViewsTest(TestCase):
 
     def test_create_productivity_fail_invalid_data_group(self) -> None:
         request = RequestFactory().post(
-            "productivity/",
+            "",
             data={"item": "Calendar", "frequency": "0", "group": "Next" * 51},
         )
         response = create_productivity(request.POST)
@@ -430,7 +430,7 @@ class ViewsTest(TestCase):
         self.productivity.save()
         Productivity(item="To-Do", frequency=0, group="Next").save()
 
-        request = RequestFactory().get("productivity/")
+        request = RequestFactory().get("")
         response = index(request)
 
         self.assertEqual(response.status_code, 200)
@@ -459,7 +459,7 @@ class ViewsTest(TestCase):
 
     def test_index_post(self) -> None:
         request = RequestFactory().post(
-            "productivity/",
+            "",
             data={"item": "Calendar", "frequency": "0", "group": "Next"},
         )
         response = index(request)
@@ -476,7 +476,7 @@ class ViewsTest(TestCase):
         )
 
     def test_index_fail_put(self) -> None:
-        request = RequestFactory().put("productivity/")
+        request = RequestFactory().put("")
         response = index(request)
 
         self.assertEqual(response.status_code, 405)
@@ -484,7 +484,7 @@ class ViewsTest(TestCase):
     def test_index_detail_get(self) -> None:
         self.productivity.save()
 
-        request = RequestFactory().get("productivity/1/")
+        request = RequestFactory().get("")
         response = index_detail(request, 1)
 
         self.assertEqual(response.status_code, 200)
@@ -502,7 +502,7 @@ class ViewsTest(TestCase):
         self.assertDictEqual(productivity, expected)
 
     def test_index_detail_fail_post(self) -> None:
-        request = RequestFactory().post("productivity/1/")
+        request = RequestFactory().post("")
         response = index_detail(request, 1)
 
         self.assertEqual(response.status_code, 405)

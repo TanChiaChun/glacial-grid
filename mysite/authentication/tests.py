@@ -7,7 +7,7 @@ from authentication.views import authentication_login, csrftoken
 
 class ViewsTests(SimpleTestCase):
     def test_authentication_login_get(self) -> None:
-        request = RequestFactory().get("/authentication/login/")
+        request = RequestFactory().get("")
         response = authentication_login(request)
 
         self.assertEqual(response.status_code, 401)
@@ -16,13 +16,13 @@ class ViewsTests(SimpleTestCase):
         )
 
     def test_authentication_login_fail_put(self) -> None:
-        request = RequestFactory().put("/authentication/login/")
+        request = RequestFactory().put("")
         response = authentication_login(request)
 
         self.assertEqual(response.status_code, 405)
 
     def test_csrftoken(self) -> None:
-        request = RequestFactory().get("/authentication/csrftoken/")
+        request = RequestFactory().get("")
         response = csrftoken(request)
 
         self.assertIn("csrftoken", response.cookies)
