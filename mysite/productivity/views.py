@@ -2,6 +2,7 @@
 
 from typing import cast
 
+from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ValidationError
 from django.http import HttpRequest, JsonResponse, QueryDict
 from django.views.decorators.http import require_http_methods
@@ -103,6 +104,7 @@ def get_productivities() -> JsonResponse:
     )
 
 
+@login_required
 @require_http_methods(["GET", "POST"])
 def index(request: HttpRequest) -> JsonResponse:
     """Get Productivity objects if GET, create if POST.
@@ -126,6 +128,7 @@ def index(request: HttpRequest) -> JsonResponse:
     return json_response
 
 
+@login_required
 @require_http_methods(["GET", "PUT", "DELETE"])
 def index_detail(request: HttpRequest, productivity_id: int) -> JsonResponse:
     """Get Productivity object if GET, update if PUT, delete if DELETE.

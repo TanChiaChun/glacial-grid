@@ -3,9 +3,10 @@ import logging
 from datetime import date, datetime, time
 from pathlib import Path
 
+from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
-from django.http import QueryDict
-from django.test import RequestFactory, TestCase
+from django.http import HttpResponseRedirect, QueryDict
+from django.test import Client, RequestFactory, TestCase
 
 # pylint: disable=wrong-import-order
 from mysite.settings import LOGGING
@@ -48,6 +49,21 @@ def is_productivity_almost_equal(
         and (first.group == second.group)
         and (first.last_check.date() == second.last_check.date())
         and (first.last_check_undo.date() == second.last_check_undo.date())
+    )
+
+
+def is_login_redirect(response: HttpResponseRedirect) -> bool:
+    """Check if a `HttpResponseRedirect` object is redirecting to login URL.
+
+    Args:
+        response:
+            `HttpResponseRedirect` object.
+
+    Returns:
+        True if redirecting to login URL, False otherwise.
+    """
+    return (response.status_code == 302) and (
+        response.url.startswith("/authentication/login/")
     )
 
 
@@ -431,6 +447,7 @@ class ViewsTest(TestCase):
         Productivity(item="To-Do", frequency=0, group="Next").save()
 
         request = RequestFactory().get("")
+        request.user = get_user_model()()
         response = index(request)
 
         self.assertEqual(response.status_code, 200)
@@ -462,6 +479,7 @@ class ViewsTest(TestCase):
             "",
             data={"item": "Calendar", "frequency": "0", "group": "Next"},
         )
+        request.user = get_user_model()()
         response = index(request)
 
         self.assertEqual(response.status_code, 201)
@@ -477,14 +495,22 @@ class ViewsTest(TestCase):
 
     def test_index_fail_put(self) -> None:
         request = RequestFactory().put("")
+        request.user = get_user_model()()
         response = index(request)
 
         self.assertEqual(response.status_code, 405)
+
+    def test_index_fail_not_login(self) -> None:
+        response = Client().get("/productivity/")
+
+        assert isinstance(response, HttpResponseRedirect)
+        self.assertIs(is_login_redirect(response), True)
 
     def test_index_detail_get(self) -> None:
         self.productivity.save()
 
         request = RequestFactory().get("")
+        request.user = get_user_model()()
         response = index_detail(request, 1)
 
         self.assertEqual(response.status_code, 200)
@@ -503,9 +529,16 @@ class ViewsTest(TestCase):
 
     def test_index_detail_fail_post(self) -> None:
         request = RequestFactory().post("")
+        request.user = get_user_model()()
         response = index_detail(request, 1)
 
         self.assertEqual(response.status_code, 405)
+
+    def test_index_detail_fail_not_login(self) -> None:
+        response = Client().get("/productivity/1/")
+
+        assert isinstance(response, HttpResponseRedirect)
+        self.assertIs(is_login_redirect(response), True)
 
     def test_update_productivity_auto_last_check(self) -> None:
         self.productivity.save()
